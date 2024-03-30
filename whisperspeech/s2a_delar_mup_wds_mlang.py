@@ -355,7 +355,7 @@ class SADelARTransformer(nn.Module):
         else:
             enc_logits = None
 
-        spk_embs = F.normalize(speakers, dim=-1) # use extracted embeddings
+        spk_embs = speakers # F.normalize(speakers, dim=-1) # use extracted embeddings
         if self.spk_factor: spk_embs = self.spk_to_hidden(spk_embs)
         return xenc + spk_embs.unsqueeze(1), positions, enc_logits
 

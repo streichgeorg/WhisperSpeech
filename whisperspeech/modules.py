@@ -103,6 +103,8 @@ class MultiHeadAttention(nn.Module):
                                           [self.sqrt_qk_scale, self.sqrt_qk_scale, 1])
         
     def split_heads(self, x, x_positions, rope=False, subsampling=1):
+        if x_positions is None:
+            x_positions = torch.arange(0, x.shape[-2], device=x.device)
         x = x.view(*x.shape[:2], self.n_head, -1)
         if rope:
             x = rope_rotate(x, x_positions * subsampling, *self.rotary(x))
