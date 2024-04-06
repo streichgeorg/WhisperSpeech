@@ -174,7 +174,7 @@ class Rotary(torch.nn.Module):
             emb = torch.cat((freqs, freqs), dim=-1).to(x.device)
             self.cos_cached = emb.cos()[None, :, None, :]
             self.sin_cached = emb.sin()[None, :, None, :]
-        return self.cos_cached, self.sin_cached
+        return self.cos_cached.to(x.dtype), self.sin_cached.to(x.dtype)
 
 
 # rotary pos emb helpers:
