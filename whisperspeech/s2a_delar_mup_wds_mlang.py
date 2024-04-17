@@ -231,10 +231,10 @@ class SADelARTransformer(nn.Module):
                  spk_width=None,
                  atoks_width=None,
                  n_head=3, head_width=64, ffn_mult=4,
-                 quantizers=8, speaker_map={"1":0}, tunables=Tunables()):
+                 quantizers=8, codes=1024, speaker_map={"1":0}, tunables=Tunables()):
         super().__init__()
         self.quantizers = quantizers
-        self.codes = 1024
+        self.codes = codes
         width = n_head * head_width
         store_attr("depth,ctx_n,stoks_len,stoks_codes,stoks_width,spk_width,atoks_width,n_head,head_width,ffn_mult,quantizers,speaker_map")
         self.width = width
@@ -272,7 +272,7 @@ class SADelARTransformer(nn.Module):
         self.embds = DelSumEmbedding(
             pos_embs=self.positional_embeddings, length=ctx_n,
             n_head=n_head, head_width=head_width, atoks_width=atoks_width,
-            quantizers=quantizers,
+            quantizers=quantizers, codes=self.codes,
         )
         self.decoder = BaseDecoder(qk_scale=qk_scale, length=ctx_n,
                                      n_head=n_head, width=n_head * head_width, 
@@ -376,7 +376,7 @@ class SADelARTransformer(nn.Module):
         with record_function("loss"):
             loss = 0
             for i in range(self.quantizers):
-                loss += F.cross_entropy(logits[:,i,:-1].reshape(-1,logits.shape[-1]), Atoks[:,i,1:].reshape(-1), ignore_index=1024)
+                loss += F.cross_entropy(logits[:,i,:-1].reshape(-1,logits.shape[-1]), Atoks[:,i,1:].reshape(-1), ignore_index=self.codes)
                 if self.training and i == 0:
                     loss *= self.tunables.q0_loss_mult
             loss_denom = self.quantizers
@@ -388,7 +388,7 @@ class SADelARTransformer(nn.Module):
         if not self.training:
             for i in range(self.quantizers):
                 Atoks_i = Atoks[:,i,1:]
-                valid_Atoks = Atoks_i != 1024
+                valid_Atoks = Atoks_i != self.codes
                 self.val_true[i] += (logits[:,i,:-1].argmax(-1)[valid_Atoks] == Atoks_i[valid_Atoks]).float().sum()
                 self.val_total[i] += valid_Atoks.float().sum()
 
