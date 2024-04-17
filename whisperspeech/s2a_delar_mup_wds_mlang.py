@@ -236,7 +236,7 @@ class SADelARTransformer(nn.Module):
         self.quantizers = quantizers
         self.codes = codes
         width = n_head * head_width
-        store_attr("depth,ctx_n,stoks_len,stoks_codes,stoks_width,spk_width,atoks_width,n_head,head_width,ffn_mult,quantizers,speaker_map")
+        store_attr("depth,ctx_n,stoks_len,stoks_codes,stoks_width,spk_width,atoks_width,n_head,head_width,ffn_mult,quantizers,speaker_map,codes")
         self.width = width
         self.base_width = 3 * head_width
         self.tunables = tunables
