@@ -343,7 +343,7 @@ class TSARTransformer(nn.Module):
 
     def load_checkpoint(self, local_filename_or_obj):
         if isinstance(local_filename_or_obj, (str, Path)):
-            spec = torch.load(local_filename, map_location='cpu')
+            spec = torch.load(local_filename_or_obj, map_location='cpu')
         else:
             spec = local_filename_or_obj
         assert 'pytorch-lightning_version' in spec, 'not a valid PyTorch Lightning checkpoint'
