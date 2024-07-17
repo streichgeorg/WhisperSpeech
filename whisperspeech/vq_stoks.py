@@ -372,7 +372,8 @@ class RQBottleneckTransformer(nn.Module):
                 local_filename = ref
         if not local_filename:
             local_filename = hf_hub_download(repo_id=repo_id, filename=filename)
-        spec = torch.load(local_filename) 
+        load_device = "cuda" if torch.cuda.is_available() else "cpu"
+        spec = torch.load(local_filename, map_location=load_device) 
         vqmodel = cls(**spec['config'], tunables=Tunables(**Tunables.upgrade(spec.get('tunables', {}))))
         vqmodel.load_state_dict(spec['state_dict'])
         vqmodel.eval()

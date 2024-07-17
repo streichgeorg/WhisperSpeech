@@ -143,7 +143,11 @@ class MultiHeadAttention(nn.Module):
             k, v = self.k_cache[:k.shape[0]], self.v_cache[:v.shape[0]]
 
         if mask is not None:
-            mask = mask[q_positions,:k.shape[-2]]
+            if len(q_positions.shape) == 1:
+                mask = mask[q_positions,:k.shape[-2]]
+            else:
+                # Assume we are not doing inference if we are using dynamic token positions
+                mask = mask[:q.shape[-2],:k.shape[-2]]
             
         wv = F.scaled_dot_product_attention(q, k, v, attn_mask=mask, dropout_p=0, is_causal=causal)
         
@@ -166,7 +170,7 @@ class Rotary(torch.nn.Module):
     def forward(self, x, seq_dim=1):
         seq_len = x.shape[seq_dim]
         if not self.seq_len_cached or seq_len > self.seq_len_cached:
-            self.seq_len_cached = 2500
+            self.seq_len_cached = 4500
             # self.seq_len_cached = seq_len
             
             t = torch.arange(self.seq_len_cached, device=x.device).type_as(self.inv_freq)
@@ -176,7 +180,6 @@ class Rotary(torch.nn.Module):
             self.sin_cached = emb.sin()[None, :, None, :]
         return self.cos_cached.to(x.dtype), self.sin_cached.to(x.dtype)
 
-
 # rotary pos emb helpers:
 def rotate_half(x):
     x1, x2 = x[..., : x.shape[-1] // 2], x[..., x.shape[-1] // 2 :]
@@ -185,7 +188,10 @@ def rotate_half(x):
     )
 
 def rope_rotate(x, positions, cos, sin):
-    return x * cos[:,positions] + rotate_half(x) * sin[:,positions]
+    if len(positions.shape) == 1:
+        return x * cos[:,positions] + rotate_half(x) * sin[:,positions]
+    else:
+        return x * cos[0, positions] + rotate_half(x) * sin[0, positions]
 
 # %% ../nbs/A. Neural modules.ipynb 7
 class ResidualAttentionBlock(nn.Module):
